@@ -21,23 +21,27 @@ import java.net.URLEncoder;
  */
 public class GoogleTranslate implements Translate{
 
-    private String tkk = "429420.603232582";
+    private String tkk = "429420.603232582";    // https://translate.google.cn 页面源码中可以获取（tkk），可以长期使用所以没做更新
 
-    public Message translate(String source, String sourceCode, String targetSource) {
+    public Message translate(String source, String sourceCode, String targetCode) {
         Message message = new Message();
         message.setSourceCode(sourceCode);
-        message.setTargetCode(targetSource);
+        message.setTargetCode(targetCode);
         message.setSourceMsg(source);
         try {
-            String translateUrl = getUrl(source, sourceCode, targetSource);
+            String translateUrl = getUrl(source, sourceCode, targetCode);
             String returnMsg = DownloadOperate.download(translateUrl);
             JSONArray l1 = JSON.parseArray(returnMsg);
             if (l1 == null || l1.isEmpty()) return message;
             JSONArray l2 = l1.getJSONArray(0);
             if (l2 == null || l2.isEmpty()) return message;
-            JSONArray l3 = l2.getJSONArray(0);
-            if (l3 == null || l3.isEmpty()) return message;
-            String target = l3.getString(0);
+            String target = "";
+            for (int i = 0; i < l2.size(); i++) {
+                JSONArray l3 = l2.getJSONArray(i);
+                if (l3 == null || l3.isEmpty()) return message;
+                target += l3.getString(0);
+
+            }
             if (StringUtils.isNotBlank(target)) {
                 message.setTargetMsg(target);
             }
@@ -48,12 +52,12 @@ public class GoogleTranslate implements Translate{
         return message;
     }
 
-    private String getUrl(String source, String sourceCode, String targetSource) throws UnsupportedEncodingException {
+    private String getUrl(String source, String sourceCode, String targetCode) throws UnsupportedEncodingException {
         String tk = getTk(source);
         StringBuilder sb = new StringBuilder();
         source = URLEncoder.encode(source, "UTF-8");
         sb.append("https://translate.google.cn/translate_a/single?client=webapp&dt=t&sl=").append(sourceCode)
-                .append("&tl=").append(targetSource)
+                .append("&tl=").append(targetCode)
                 .append("&tk=").append(tk)
                 .append("&q=").append(source);
         return sb.toString();
